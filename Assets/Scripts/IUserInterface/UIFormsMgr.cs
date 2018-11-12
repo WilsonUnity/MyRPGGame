@@ -1,6 +1,7 @@
 ﻿/*
  * IUserInterface : 用户界面系统
  * UIFormsMgr ： 这个类是UI系统的管理类，核心类
+ * 该类对窗体进行加载缓存，同时定义窗户的行为
  * 日期 ：2018
  * 程序员 : 林逸群
  */
@@ -12,7 +13,9 @@ using UnityEngine;
 namespace IUserInterface
 {
     public class UIFormsMgr : MonoBehaviour {
-
+        
+        #region 私有变量
+        
         //本脚本的实例
         private static UIFormsMgr _uiFormsMgr = null;
 
@@ -43,18 +46,8 @@ namespace IUserInterface
         //保存‘模态窗体’的栈结构
         private Stack<BaseUIForms> _UIFormsStack = null;
         
+        #endregion
         
-        //返回本脚本的实例
-        public UIFormsMgr GetInstance()
-        {
-            if (_uiFormsMgr == null)
-            {
-                _uiFormsMgr = new GameObject("_UIFormsMgr").AddComponent<UIFormsMgr>();
-            }
-
-            return _uiFormsMgr;
-        }
-
         private void Awake()
         {
             #region 初始化
@@ -86,6 +79,20 @@ namespace IUserInterface
 
         }
 
+        #region 公有方法
+
+        //返回本脚本的实例
+        public UIFormsMgr GetInstance()
+        {
+            if (_uiFormsMgr == null)
+            {
+                _uiFormsMgr = new GameObject("_UIFormsMgr").AddComponent<UIFormsMgr>();
+            }
+
+            return _uiFormsMgr;
+        }
+
+        #endregion
 
         #region 私人方法
         
@@ -93,11 +100,24 @@ namespace IUserInterface
         {
             return ResouerMgr.GetInstance().LoadAsset("Canvas", false).transform;
         }
-
+        
+        
+//--------------------------------------------------------------------------------------
+        
+        
+        /// <summary>
+        /// 从‘所有窗体集合’中获取到BaseUIForms组件
+        /// 如果‘所有窗体集合’中并不存在指定BaseUIForms组件，则进行一次加载操作
+        /// </summary>
+        /// <param name="UIFormName">窗体名称</param>
+        /// <returns></returns>
         private BaseUIForms LoadUIFormFromAllForms(string UIFormName)
         {
             BaseUIForms baseUiForms = null;
+            
+            //根据窗体名称匹配BaseUIForms组件
             _dicAllUIForms.TryGetValue(UIFormName, out baseUiForms);
+            
             if (baseUiForms == null)
             {
                 baseUiForms = LoadUIForm(UIFormName);
@@ -105,18 +125,35 @@ namespace IUserInterface
 
             return baseUiForms;
         }
+        
+        
+//--------------------------------------------------------------------------------------
+        
 
+        /// <summary>
+        /// 根据窗体名称加载窗体，并将其保存到‘所有窗体集合’的字典中。
+        /// 实例化到场景的窗体，会根据窗体类型自动挑选父结点
+        /// </summary>
+        /// <param name="UIFormName">窗体名称</param>
+        /// <returns></returns>
         private BaseUIForms LoadUIForm(string UIFormName)
         {
+            //路径名称
             string UIFormPath = null;
+            
+            //实例化到场景的窗体
             GameObject goClone = null;
+            
+            //窗体上挂载的BaseUiForms组件
             BaseUIForms baseUiForms = null;
 
+            //检查有没有与窗体名称匹配的路径
             _dicPath.TryGetValue(UIFormName, out UIFormPath);
 
             goClone = ResouerMgr.GetInstance().LoadAsset(UIFormPath, true);
             baseUiForms = goClone.GetComponent<BaseUIForms>();
 
+            //根据窗体类型选择父结点
             if (_transCanvas != null && baseUiForms != null)
             {
                 switch (baseUiForms.UiType.m_UIFormType)
@@ -135,14 +172,18 @@ namespace IUserInterface
                 }
             }
 
+            //先设置为不可见
             goClone.SetActive(false);
+            
+            //保存到‘所有窗体集合’
             _dicAllUIForms.Add(UIFormName, baseUiForms);
 
             return baseUiForms;
-        }
+            
+        }//LoadUIForm_End
 
         #endregion
        
-    }
+    }//Class_End
 }
 
