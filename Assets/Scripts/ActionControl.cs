@@ -11,6 +11,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters;
+using IUserInterface;
 using UnityEngine;
 
 public class ActionControl : MonoBehaviour
@@ -79,6 +80,9 @@ public class ActionControl : MonoBehaviour
     
     //角色控制柄挂载的刚体
     private Rigidbody _rigidbodyrig;
+    
+    //当前是否打开背包界面
+    private bool isOpenBGUIForm = false;
     
     #endregion
     private IInputState _inputState;
@@ -373,8 +377,23 @@ public class ActionControl : MonoBehaviour
                 }
             }
             
+        }//if(_animator)_End
+
+        if (_inputState.isStart && !isOpenBGUIForm)
+        {
+            UIFormsMgr.GetInstance().ShowUIForm("BG_UI");
+            Cursor.lockState = CursorLockMode.None;
+            isOpenBGUIForm = true;
         }
-    }
+        else
+        if(_inputState.isStart && isOpenBGUIForm)
+        {
+            UIFormsMgr.GetInstance().CloseUIForm("BG_UI");
+            Cursor.lockState = CursorLockMode.Locked; 
+            isOpenBGUIForm = false;
+        }
+
+    }//Update_End
     
     private void FixedUpdate()
     {

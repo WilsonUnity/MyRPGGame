@@ -11,9 +11,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 
-/// </summary>
 public abstract class IUserInput : MonoBehaviour {
 
 #region variable
@@ -66,6 +63,8 @@ public abstract class IUserInput : MonoBehaviour {
 	public bool rb;
 	//手柄RT键
 	public bool rt;
+
+	public bool isStart;
 	
     //public bool isattack;
 

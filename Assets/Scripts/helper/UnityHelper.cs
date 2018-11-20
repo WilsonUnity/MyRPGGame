@@ -6,6 +6,7 @@
  */
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using UnityEngine;
 
 public static class UnityHelper{
@@ -36,4 +37,52 @@ public static class UnityHelper{
 	}
 	
 	
+//--------------------------------------------------------------------------------------
+	
+
+	/// <summary>
+	/// 为子物件添加组件
+	/// </summary>
+	/// <param name="parent">父结点</param>
+	/// <param name="name">子物件名称</param>
+	/// <typeparam name="T"></typeparam>
+	/// <returns></returns>
+	public static T AddChildCompont<T>(Transform parent, string name) where T : Component
+	{
+		Transform child = DeepFind(parent, name);
+		T TCompont;
+		
+		if (child == null)
+		{
+			return null;
+		}
+		
+		TCompont = child.GetComponent<T>();
+		if (TCompont == null)
+		{
+			return child.gameObject.AddComponent<T>();
+		}
+
+		return TCompont;
+	}
+
+	
+//--------------------------------------------------------------------------------------	
+
+	
+	/// <summary>
+	/// 为物件设置父结点
+	/// </summary>
+	/// <param name="parent">父结点</param>
+	/// <param name="child">子物件</param>
+	public static void SetParent(Transform parent, Transform child)
+	{
+		child.SetParent(parent);
+		child.localPosition = Vector3.zero;
+		child.localEulerAngles = Vector3.zero;
+		child.localScale = Vector3.one;
+		
+	}
+
+
 }

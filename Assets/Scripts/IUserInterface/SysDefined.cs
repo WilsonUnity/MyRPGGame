@@ -21,7 +21,9 @@ namespace IUserInterface
         //固定窗体
         Fixed,
         //弹出窗体
-        PopUp
+        PopUp,
+        //世界空间窗体
+        Space
     }
 	
     //窗体显示类型
@@ -33,7 +35,9 @@ namespace IUserInterface
         //出现时隐藏其它窗体
         HideOther,
         //模态窗体
-        ReverseChange
+        ReverseChange,
+        //世界空间窗体，另外处理
+        Space
     }
 	
     //透明度类型
@@ -52,7 +56,15 @@ namespace IUserInterface
     
     public class UISysDefined
     {
+        [Header("===路径常量===")]
+        public const string SYS_PATH_CANVAS         = "Canvas";
+        public const string SYS_PATH_UIFORMS_CONFIG_INFO = "UIFormsConfigInfo";
         
+        [Header("===便签常量===")]
+        public const string SyS_TAG_CANVAS          = "_TagCanvas";
+
+        [Header("===节点常量===")]
+        public const string SYS_SCRIPTMANAGER_NODE  = "_ScriptMgr";
     }
 
 }

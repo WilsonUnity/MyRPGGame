@@ -63,7 +63,7 @@ namespace IUserInterface
             _transCanvas = InitLoadCanvas();
             
             //找到本脚本对象的父结点
-            _transScript = _transCanvas.Find("_UIMgrScript").transform;
+            _transScript = _transCanvas.Find("_ScriptMgr").transform;
             //将本脚本对象作为_transScript的子结点
             gameObject.transform.SetParent(_transScript);
             
@@ -73,16 +73,21 @@ namespace IUserInterface
             _transPopUp = _transCanvas.Find("PopUp").transform;
 
             //切换场景不销毁本物件
-            DontDestroyOnLoad(this.gameObject);
+            DontDestroyOnLoad(_transCanvas);
 
             //路径导入
+            if (_dicPath != null)
+            {
+                _dicPath.Add("Main_UI", "Main_UI");
+                _dicPath.Add("BG_UI","BG");
+            }
 
         }
 
         #region 公有方法
 
         //返回本脚本的实例
-        public UIFormsMgr GetInstance()
+        public static UIFormsMgr GetInstance()
         {
             if (_uiFormsMgr == null)
             {
@@ -90,6 +95,73 @@ namespace IUserInterface
             }
 
             return _uiFormsMgr;
+        }
+        
+         public void ShowUIForm(string strUIFormName)
+        {
+            BaseUIForms baseUiForms = null;
+            
+            //空名称结束程序
+            if (string.IsNullOrEmpty(strUIFormName))
+            {
+                return;
+            }
+
+            //获取到指定的窗体基础类
+            baseUiForms = LoadUIFormFromAllForms(strUIFormName);
+            if (baseUiForms == null) return;
+           
+            //此窗体的显示方式
+            switch (baseUiForms.UiType.m_UIFormShowType)
+            {
+                //正常窗体
+                case UIFormShowType.Normal:
+                    EnterUIForm(strUIFormName);
+                    break;
+                //隐藏其他窗体
+                case UIFormShowType.HideOther:
+                    EnterUIFormAndHideOther(strUIFormName);
+                    break;
+                //模态窗体
+                case UIFormShowType.ReverseChange:
+                    PushUIForm(strUIFormName);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        //-----------------------------------------------------------------
+        
+        /// <summary>
+        /// 关闭窗体
+        /// </summary>
+        /// <param name="strUIFormName">UI窗体名称</param>
+        public void CloseUIForm(string strUIFormName)
+        {
+            BaseUIForms baseUI = null;
+            if (string.IsNullOrEmpty(strUIFormName)) return;
+
+            //如果无法从所有UI资源中找到指定窗体就结束程序
+            _dicAllUIForms.TryGetValue(strUIFormName, out baseUI);
+            if (baseUI == null) return;
+
+            //根据不同窗体类型进行不同的关闭操作
+            switch (baseUI.UiType.m_UIFormShowType)
+            {
+                case UIFormShowType.Normal:
+                    ExitUIForm(strUIFormName);
+                    break;
+                case UIFormShowType.HideOther:
+                    ExitUIFormAndShowOther(strUIFormName);
+                    break;
+                case UIFormShowType.ReverseChange:
+                    PopUIForm();
+                    break;
+                default:
+                    break;
+            }
+
         }
 
         #endregion
@@ -159,21 +231,25 @@ namespace IUserInterface
                 switch (baseUiForms.UiType.m_UIFormType)
                 {
                     case UIFormType.Normal:
-                        goClone.transform.SetParent(_transNormal);
+                        UnityHelper.SetParent(_transNormal,goClone.transform);
+                       // goClone.transform.SetParent(_transNormal);
                         break;
                     case UIFormType.Fixed:
-                        goClone.transform.SetParent(_transFixed);
+                        UnityHelper.SetParent(_transFixed, goClone.transform);
+                        //goClone.transform.SetParent(_transFixed);
                         break;
                     case UIFormType.PopUp:
-                        goClone.transform.SetParent(_transPopUp);
+                        UnityHelper.SetParent(_transPopUp, goClone.transform);
+                       // goClone.transform.SetParent(_transPopUp);
                         break;
                     default:
                         break;
                 }
             }
 
-            //先设置为不可见
-            goClone.SetActive(false);
+            //先设置为不可见,世界空间型窗体除外
+            if (baseUiForms.UiType.m_UIFormType != UIFormType.Space)
+                goClone.SetActive(false);
             
             //保存到‘所有窗体集合’
             _dicAllUIForms.Add(UIFormName, baseUiForms);
@@ -182,6 +258,208 @@ namespace IUserInterface
             
         }//LoadUIForm_End
 
+        
+//--------------------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// 显示方式为Normal型窗体的显示操作
+        /// 将窗体加入’当前显示集合‘中
+        /// </summary>
+        /// <param name="UIFormName"></param>
+        private void EnterUIForm(string UIFormName)
+        {
+            BaseUIForms curBaseUiForms;
+            BaseUIForms allBaseUiForms;
+
+            //检测‘当前显示集合’中是否存在该窗体
+            //如果存在，不进行后续操作
+            _dictCurUIForms.TryGetValue(UIFormName, out curBaseUiForms);
+            if (curBaseUiForms != null)
+            {
+                return;
+            }
+
+            //检测’所有窗体集合‘是否存在该窗体
+            //如果存在，加入’当前显示集合‘，并设置为显示
+            _dicAllUIForms.TryGetValue(UIFormName, out allBaseUiForms);
+            if (allBaseUiForms != null)
+            {
+                _dictCurUIForms.Add(UIFormName, allBaseUiForms);
+                allBaseUiForms.DisPlay();
+            }
+            else
+            {
+                Debug.Log("无法提取到窗体资源：" + UIFormName);
+            }
+        }
+        
+        
+//--------------------------------------------------------------------------------------
+        
+
+        /// <summary>
+        /// 显示方式为Normal型窗体的隐藏操作
+        /// 将窗体移除’当前显示集合‘中
+        /// </summary>
+        /// <param name="UIFormName"></param>
+        private void ExitUIForm(string UIFormName)
+        {
+            BaseUIForms baseUiForms;
+
+            //如果该窗体已经隐藏，就无需后续操作
+            _dictCurUIForms.TryGetValue(UIFormName, out baseUiForms);
+            if (baseUiForms == null)
+            {
+                return;
+            }
+            
+            baseUiForms.Hide();
+            _dictCurUIForms.Remove(UIFormName);
+        }
+        
+        
+//--------------------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// 显示方式为HideOther型窗体的显示操作
+        /// 当该窗体显示时，会隐藏场景中其他窗体
+        /// </summary>
+        private void EnterUIFormAndHideOther(string UIFormName)
+        {
+            BaseUIForms baseUiForms;
+            BaseUIForms allBaseUiForms;
+
+            _dictCurUIForms.TryGetValue(UIFormName, out baseUiForms);
+            if (baseUiForms != null)
+            {
+                return;
+            }
+
+            //将'当前显示集合'中窗体隐藏
+            foreach (BaseUIForms baseUI in _dictCurUIForms.Values)
+            {
+                baseUI.Hide();
+            }
+
+            //将'窗体栈'中的窗体隐藏
+            foreach (BaseUIForms baseUI in _UIFormsStack)
+            {
+                baseUI.Hide();
+            }
+
+            _dicAllUIForms.TryGetValue(UIFormName, out allBaseUiForms);
+            if (allBaseUiForms != null)
+            {
+                _dictCurUIForms.Add(UIFormName, allBaseUiForms);
+                allBaseUiForms.DisPlay();
+            }
+            else
+            {
+                Debug.Log("无法提取到窗体资源：" + UIFormName);
+            }
+        }
+        
+        
+//--------------------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// 显示方式为HideOther型窗体的隐藏操作
+        /// 当该窗体隐藏时，会重新显示场景中其他窗体
+        /// </summary>
+        private void ExitUIFormAndShowOther(string UIFormName)
+        {
+            BaseUIForms baseUiForms;
+
+            _dictCurUIForms.TryGetValue(UIFormName, out baseUiForms);
+            if (baseUiForms == null)
+            {
+                return;
+            }
+
+            //重新显示
+            foreach (BaseUIForms baseUI in _dictCurUIForms.Values)
+            {
+                baseUI.RedisPlay();
+            }
+
+            foreach (BaseUIForms baseUI in _UIFormsStack)
+            {
+                baseUI.RedisPlay();
+            }
+            
+            baseUiForms.Hide();
+            _dictCurUIForms.Remove(UIFormName);
+        }
+        
+        
+        
+//--------------------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// 显示方式为ReverseChange型窗体的显示操作
+        /// 用栈结构来处理模态窗体的层级关系
+        /// </summary>
+        private void PushUIForm(string UIFormName)
+        {
+            BaseUIForms baseUiForms;
+            
+            //检查是否存在栈顶元素
+            if (_UIFormsStack.Count > 0)
+            {
+                BaseUIForms baseUI = _UIFormsStack.Peek();
+                baseUI.Free();
+            }
+
+            _dicAllUIForms.TryGetValue(UIFormName, out baseUiForms);
+
+            if (baseUiForms != null)
+            {
+                //将窗体推入栈
+                _UIFormsStack.Push(baseUiForms);
+                baseUiForms.DisPlay();
+            }
+            else
+            {
+                Debug.Log("无法提取到窗体资源：" + UIFormName);
+            }
+        }
+
+        
+//--------------------------------------------------------------------------------------
+
+
+        /// <summary>
+        /// 出栈，清除栈顶的窗体
+        /// </summary>
+        private void PopUIForm()
+        {
+            //如果栈中存在2个以上窗体
+            if (_UIFormsStack.Count >= 2)
+            {
+                //移除顶上窗体
+                BaseUIForms topBaseUI = _UIFormsStack.Pop();
+                topBaseUI.Hide();
+                //返回当前顶层窗体
+                BaseUIForms curBaseUI = _UIFormsStack.Peek();
+                curBaseUI.RedisPlay();
+            }
+            
+            else//只存在一个窗体，直接隐藏
+            if(_UIFormsStack.Count == 1)
+            {
+                BaseUIForms baseUI = _UIFormsStack.Pop();
+                baseUI.Hide();
+            }
+        }
+        
+
+//--------------------------------------------------------------------------------------
+        
+        
         #endregion
        
     }//Class_End

@@ -24,7 +24,7 @@ namespace SceneStateManager
 		public override void SceneStart()
 		{
 			//获取开始菜单并进行事件绑定
-			Button btn_Start = GameObject.Find("Start").GetComponent<Button>();
+			Button btn_Start = GameObject.FindGameObjectWithTag("_TagPlay").GetComponent<Button>();
 			if (btn_Start != null)
 			{
 				btn_Start.onClick.AddListener(() => OnEnterGameBtnClick());

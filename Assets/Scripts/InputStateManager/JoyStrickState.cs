@@ -22,6 +22,9 @@ public class JoyStrickState : IInputState {
 	
 	public string btn8 = "btn8"; //左摇杆按压(L3)
 	public string btn9 = "btn9"; //右摇杆按压(R3)
+	
+	public string Btn_Select = "Select";
+	public string Btn_Start = "Start";
 
 	private float value = 0;
 	
@@ -39,6 +42,8 @@ public class JoyStrickState : IInputState {
 	public MyButton buttonL3 = new MyButton();
 	public MyButton buttonR3 = new MyButton();	
 	
+	public MyButton buttonSelect = new MyButton();
+	public MyButton buttonStart = new MyButton();
 
 	#endregion
 
@@ -63,6 +68,9 @@ public class JoyStrickState : IInputState {
 
 		buttonRT.GetSignal(true, Input.GetAxis(RT));
 		buttonLT.GetSignal(true, Input.GetAxis(LT));
+		
+		buttonSelect.GetSignal(Input.GetButton(Btn_Select));
+		buttonStart.GetSignal(Input.GetButton(Btn_Start));
 
 		#endregion
 
@@ -105,6 +113,7 @@ public class JoyStrickState : IInputState {
 		isdefense = buttonLB.isPressing;
 		isjump = buttonA.OnPressed;
 		isFontStab = buttonB.OnPressed;
+		isStart = buttonStart.OnPressed;
 
 		rb = buttonRB.OnPressed;
 		lb = buttonLB.OnPressed;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using IUserInterface;
 
 public class EventManager : MonoBehaviour {
 
@@ -12,7 +13,8 @@ public class EventManager : MonoBehaviour {
 	{
 		FSM_ENTER,
 		FSM_EXIT,
-		FSM_UPDATE
+		FSM_UPDATE,
+		Props
 	}
 	
 	#endregion
@@ -82,9 +84,9 @@ public class EventManager : MonoBehaviour {
 		Listeners.Add(Event_Type, ListenerList);
 	}
 	//-------------------------------------------
+	
+	
 
-	
-	
 	/// <summary>
 	///Funiction to post event to listeners 
 	/// </summary>
@@ -107,9 +109,9 @@ public class EventManager : MonoBehaviour {
 				ListenerList[i](Event_Type, Sender, Param);
 		}
 	}
-
-	 
-
-
+	//-------------------------------------------
+	
+	
+	
 
 }

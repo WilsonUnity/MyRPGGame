@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Weapon
   - Enter
+  - _TagCanvas
+  - _TagUICamera
+  - _TagPlay
   layers:
   - Default
   - TransparentFX

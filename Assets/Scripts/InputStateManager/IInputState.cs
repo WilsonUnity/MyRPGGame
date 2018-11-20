@@ -42,6 +42,8 @@ public class IInputState
     public bool rb;
     //手柄RT键
     public bool rt;
+
+    public bool isStart;
     #endregion
     
 //-----------------------------------------------------------
